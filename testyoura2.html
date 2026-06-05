@@ -254,15 +254,11 @@ function submitTest(){
 
 function getLevelMessage(score){
   if(score >= 23){
-    return `Your score means you might be ready to prepare for <b>B1 Preliminary (PET)</b> or <b>B1 level</b> exams.`;
-  } else if(score >= 18){
-    return `Your score means you might be ready to prepare for <b>A2 Key (KET)</b> or <b>B1 level</b> courses.`;
-  } else if(score >= 12){
-    return `Your score means you might be ready to prepare for <b>A2 Key (KET)</b> or <b>A2 level</b> courses.`;
-  } else if(score >= 7){
-    return `Your score means you might be ready to prepare for <b>A1 Movers</b> or <b>A2 level</b> courses.`;
+    return `Your score means you might be ready to prepare for <b>C1 Advanced</b> exams.`;
+  } else if(score >= 16){
+    return `Your score means you might be ready to prepare for <b>A2 Key for Schools</b> or <b>B1 Preliminary for Schools</b>.`;
   } else {
-    return `Your score means you might be ready to prepare for <b>A1 level</b> or <b>A1 Movers</b> courses.`;
+    return `Your score means you might be ready to prepare for <b>A2 for Schools</b> in both cases.`;
   }
 }
 
