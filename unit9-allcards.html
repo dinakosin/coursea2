@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Unit 9 — Vocabulary Flashcards</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root{
+    --bg:#fdf6ec; --bg2:#fef9f3; --accent:#f6a623; --accent2:#e8743b;
+    --good:#7ac74f; --card:#ffffff; --txt:#3a342e;
+  }
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:linear-gradient(160deg,var(--bg),var(--bg2));
+    color:#3a342e; min-height:100vh;
+    display:flex; flex-direction:column; align-items:center;
+    padding:14px; overflow-x:hidden;
+  }
+  .wrap{width:100%; max-width:460px; display:flex; flex-direction:column; gap:12px;}
+  header h1{
+    font-size:2.1rem; margin:4px 0 0; text-align:left; font-weight:700;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  header p{ margin:2px 0; text-align:left; font-size:.78rem; color:#a89b88;}
+  .progress-outer{
+    width:100%; height:12px; background:rgba(232,116,59,.15);
+    border-radius:20px; overflow:hidden; margin-bottom:10px;
+  }
+  .progress-inner{
+    height:100%; width:4%;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    border-radius:20px; transition:width .4s ease;
+  }
+  .counter{ text-align:left; font-size:.82rem; color:#b0795a; font-weight:600; margin-bottom:24px; }
+  .scene{ width:100%; height:340px; perspective:1200px; margin-top:4px; }
+  .card{
+    width:100%; height:100%; position:relative;
+    transform-style:preserve-3d; transition:transform .5s; cursor:pointer;
+  }
+  .card.flipped{ transform:rotateY(180deg); }
+  .face{
+    position:absolute; inset:0; backface-visibility:hidden;
+    border-radius:22px; padding:22px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; gap:14px; box-shadow:0 12px 30px rgba(232,116,59,.18);
+  }
+  .front{ background:var(--card); color:var(--txt); border:2px solid #f6e3cd; }
+  .back{ background:linear-gradient(160deg,#f6a623,#e8743b); color:#fff; transform:rotateY(180deg); }
+  .emoji{ font-size:3.4rem; line-height:1; }
+  .translation{ font-size:1.4rem; font-weight:700; }
+  .example{ font-size:1rem; color:#8c8074; font-style:italic; line-height:1.4;}
+  .back .word{ font-size:2rem; font-weight:800; letter-spacing:.5px; }
+  .blank{ display:inline-block; min-width:60px; }
+  .qlabel{ font-size:.72rem; text-transform:uppercase; letter-spacing:1px; opacity:.6; }
+  .question{ font-size:1.25rem; font-weight:700; line-height:1.4; }
+  .answer{ font-size:1.5rem; font-weight:800; }
+  .tap-hint{ font-size:.7rem; opacity:.45; margin-top:6px; }
+  .motivation{ background:linear-gradient(160deg,#7ac74f,#4ca832)!important; color:#fff; border:none!important; }
+  .motivation .emoji{ font-size:4rem; }
+  .motivation .translation{ font-size:1.4rem; }
+  .controls{ display:flex; gap:10px; justify-content:center; margin-top:24px;}
+  button{
+    flex:1; border:none; border-radius:14px; padding:13px 8px;
+    font-size:.92rem; font-weight:700; cursor:pointer; color:#fff;
+    background:rgba(232,116,59,.35); transition:transform .1s, background .2s;
+  }
+  button:active{ transform:scale(.95); }
+  button.primary{ background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+  button.shuffle{ background:rgba(246,166,35,.4); }
+  .review{ display:none; flex-direction:column; gap:14px; }
+  .review h2{ text-align:right; font-size:1rem; margin:0; color:#3a342e;}
+  .review p{ text-align:right; font-size:.82rem; color:#a89b88; margin:0; }
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .mini{
+    background:var(--card); color:var(--txt); border-radius:14px;
+    text-align:center; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:6px; cursor:pointer;
+    border:3px solid #f6e3cd; transition:.15s; min-height:110px; padding:10px 6px;
+  }
+  .mini .me{ font-size:1.5rem; }
+  .mini .mw{ font-size:.7rem; font-weight:700; line-height:1.15; word-break:break-word; hyphens:auto; overflow:hidden; }
+  .mini.selected{ border-color:#e8743b; transform:scale(.97); background:#fdeede; }
+  .final{ display:none; text-align:center; padding:30px 10px; }
+  .final .big{ font-size:3.5rem; }
+  .final h2{ font-size:1.4rem; margin:14px 0 6px; color:#3a342e;}
+  .final p{ color:#a89b88; font-size:.95rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Unit 9: Success</h1>
+    <p>Подготовка к уроку · Vocabulary flashcards (английский)</p>
+  </header>
+
+  <div id="study">
+    <div class="progress-outer"><div class="progress-inner" id="bar"></div></div>
+    <div class="counter">Осталось повторить: <span id="counter">1/60</span></div>
+    <div class="scene">
+      <div class="card" id="card" onclick="flip()">
+        <div class="face front" id="front"></div>
+        <div class="face back" id="back"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="shuffle" onclick="shuffleDeck()">🔀 Перемешать</button>
+      <button onclick="prevCard()">← Назад</button>
+      <button class="primary" onclick="nextCard()">Дальше →</button>
+    </div>
+  </div>
+
+  <div class="review" id="review">
+    <h2>Отметь сложные карточки</h2>
+    <p>Нажми на те слова, которые запомнились плохо. Сет <span id="setNum">1</span></p>
+    <div class="grid" id="grid"></div>
+    <div class="controls">
+      <button class="primary" onclick="iKnowAll()">✅ Помню все</button>
+      <button onclick="nextReviewSet()">Дальше →</button>
+    </div>
+  </div>
+
+  <div class="final" id="final">
+    <div class="big">🎉</div>
+    <h2>Excellent! Отличная работа!</h2>
+    <p id="finalMsg"></p>
+    <div class="controls" style="margin-top:20px;">
+      <button class="primary" onclick="restart()">🔁 Начать заново</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const baseCards = [
+  /* ===== Success & failure ===== */
+  {type:'word', emoji:'🏆', tr:'успех', word:'success', ex:'Hard work leads to _____.'},
+  {type:'word', emoji:'🌟', tr:'успешный', word:'successful', ex:'She is a very _____ businesswoman.'},
+  {type:'word', emoji:'✅', tr:'быть успешным в чём-то', word:'succeed in', ex:'He hopes to _____ his career.'},
+  {type:'word', emoji:'💥', tr:'неудача, провал', word:'failure', ex:'Don\'t be afraid of _____.'},
+  {type:'word', emoji:'❌', tr:'потерпеть неудачу', word:'fail', ex:'If you don\'t try, you might _____.'},
+  {type:'word', emoji:'💡', tr:'вдохновение', word:'inspiration', ex:'Her story is a great _____.'},
+  {type:'word', emoji:'✨', tr:'вдохновляющий', word:'inspiring', ex:'It was an _____ speech.'},
+  {type:'word', emoji:'😞', tr:'свергнуть, расстроить кого-то', word:'bring (someone) down', ex:'Don\'t let failures _____ you _____.'},
+  {type:'word', emoji:'🍀', tr:'удача', word:'luck', ex:'Good _____ with your exam!'},
+  {type:'word', emoji:'💭', tr:'мечтать о чём-то', word:'dream of/about', ex:'I _____ becoming a doctor.'},
+  {type:'word', emoji:'🥇', tr:'соревноваться в чём-то', word:'compete in', ex:'She will _____ the Olympics.'},
+  {type:'word', emoji:'🎯', tr:'достигать', word:'achieve', ex:'You can _____ your goals.'},
+  {type:'word', emoji:'🚀', tr:'пробиться в жизни', word:'make something of oneself', ex:'He worked hard to _____.'},
+  {type:'word', emoji:'📈', tr:'добиваться популярности', word:'gain popularity', ex:'The band started to _____.'},
+  {type:'word', emoji:'🤝', tr:'поддержка', word:'support', ex:'Thank you for your _____.'},
+  {type:'word', emoji:'🙅', tr:'сдаваться, бросать что-то', word:'give up', ex:'Never _____ on your dreams!'},
+
+  /* ===== Describing photos ===== */
+  {type:'word', emoji:'🎯', tr:'в центре', word:'in the centre', ex:'There is a tree _____.'},
+  {type:'word', emoji:'🖼️', tr:'на заднем плане', word:'in the background', ex:'You can see mountains _____.'},
+  {type:'word', emoji:'🔍', tr:'на переднем плане', word:'in the foreground', ex:'A dog is sitting _____.'},
+  {type:'word', emoji:'🌄', tr:'вдали, вдалеке', word:'in the distance', ex:'I can see a ship _____.'},
+  {type:'word', emoji:'👈', tr:'слева (фото)', word:'on the left', ex:'There is a house _____ of the photo.'},
+  {type:'word', emoji:'👉', tr:'справа (фото)', word:'on the right', ex:'A car is parked _____ of the photo.'},
+  {type:'word', emoji:'⬇️', tr:'внизу (фото)', word:'at the bottom', ex:'There is grass _____ of the photo.'},
+  {type:'word', emoji:'⬆️', tr:'вверху (фото)', word:'at the top', ex:'The sky is _____ of the photo.'},
+
+  /* ===== Inventions & exploration ===== */
+  {type:'word', emoji:'⚔️', tr:'битва', word:'battle', ex:'The famous _____ lasted three days.'},
+  {type:'word', emoji:'🔬', tr:'изобретать', word:'invent', ex:'Who did _____ the telephone?'},
+  {type:'word', emoji:'🛞', tr:'шина', word:'tyre', ex:'My bike has a flat _____.'},
+  {type:'word', emoji:'🏁', tr:'достигать', word:'reach', ex:'They will _____ the top of the hill.'},
+  {type:'word', emoji:'⚙️', tr:'двигатель', word:'engine', ex:'The car _____ is very powerful.'},
+  {type:'word', emoji:'🧭', tr:'исследователь', word:'explorer', ex:'The _____ discovered a new land.'},
+  {type:'word', emoji:'📏', tr:'миля', word:'mile', ex:'We walked one _____ today.'},
+  {type:'word', emoji:'💡', tr:'лампочка', word:'light bulb', ex:'Edison invented the _____.'},
+  {type:'word', emoji:'🖋️', tr:'чернила', word:'ink', ex:'The pen ran out of _____.'},
+  {type:'word', emoji:'☸️', tr:'колесо', word:'wheel', ex:'The _____ is a great invention.'},
+  {type:'word', emoji:'📄', tr:'бумага', word:'paper', ex:'Write your name on the _____.'},
+
+  /* ===== Natural world ===== */
+  {type:'word', emoji:'🕳️', tr:'пещера', word:'cave', ex:'Bats live in the _____.'},
+  {type:'word', emoji:'🧗', tr:'утёс', word:'cliff', ex:'The house stands on a _____.'},
+  {type:'word', emoji:'⛰️', tr:'холм', word:'hill', ex:'We climbed up the _____.'},
+  {type:'word', emoji:'🏖️', tr:'берег (морской)', word:'shore', ex:'We walked along the _____.'},
+  {type:'word', emoji:'🏞️', tr:'ручей, ключ', word:'stream', ex:'A small _____ runs through the forest.'},
+  {type:'word', emoji:'🏔️', tr:'долина', word:'valley', ex:'The river flows through the _____.'},
+  {type:'word', emoji:'🌋', tr:'вулкан', word:'volcano', ex:'The _____ erupted last year.'},
+  {type:'word', emoji:'💦', tr:'водопад', word:'waterfall', ex:'We swam under the _____.'},
+  {type:'word', emoji:'🌑', tr:'тёмный', word:'dark', ex:'The cave was cold and _____.'},
+  {type:'word', emoji:'🌊', tr:'глубокий', word:'deep', ex:'The lake is very _____.'},
+  {type:'word', emoji:'🧊', tr:'покрытый льдом', word:'icy', ex:'The roads were _____ in winter.'},
+  {type:'word', emoji:'📉', tr:'низкий', word:'low', ex:'The bridge is very _____.'},
+  {type:'word', emoji:'↔️', tr:'широкий', word:'wide', ex:'The river is too _____ to cross.'},
+  {type:'word', emoji:'🚪', tr:'узкий', word:'narrow', ex:'It was a _____ mountain path.'},
+  {type:'word', emoji:'🐚', tr:'мелкий, поверхностный', word:'shallow', ex:'The water here is _____ and safe.'},
+  {type:'word', emoji:'📐', tr:'крутой, обрывистый', word:'steep', ex:'The path up the hill was very _____.'},
+  {type:'word', emoji:'🪨', tr:'скалистый', word:'rocky', ex:'The beach was _____, not sandy.'},
+
+  /* ===== Travel & transport ===== */
+  {type:'word', emoji:'🛣️', tr:'далеко, дальний', word:'far', ex:'Is the station _____ from here?'},
+  {type:'word', emoji:'🚑', tr:'скорая помощь', word:'ambulance', ex:'Call an _____ quickly!'},
+  {type:'word', emoji:'🎟️', tr:'билет', word:'ticket', ex:'I bought a train _____.'},
+  {type:'word', emoji:'ℹ️', tr:'туристическая справочная', word:'tourist information centre', ex:'Ask at the _____.'},
+  {type:'word', emoji:'🔁', tr:'возврат, возвращаться', word:'return', ex:'I\'d like a _____ ticket, please.'},
+  {type:'word', emoji:'⏳', tr:'задержка, задерживать', word:'delay', ex:'There is a long _____ at the airport.'},
+  {type:'word', emoji:'⏰', tr:'пропустить, опоздать', word:'miss', ex:'Hurry up or we\'ll _____ the bus!'},
+  {type:'word', emoji:'🚗', tr:'трафик, дорожное движение', word:'traffic', ex:'There is heavy _____ today.'},
+  {type:'word', emoji:'⛽', tr:'бензин', word:'petrol', ex:'We need to buy some _____.'},
+
+  /* ===== Grammar / phrases ===== */
+  {type:'grammar', emoji:'🏆', q:'Как сказать «Никогда не сдавайся!»', a:'Never give up!'},
+  {type:'grammar', emoji:'💭', q:'Как сказать «Я мечтаю стать врачом»?', a:'I dream of becoming a doctor.'},
+  {type:'grammar', emoji:'🖼️', q:'Как описать «На заднем плане я вижу горы»?', a:'In the background I can see mountains.'},
+  {type:'grammar', emoji:'🎯', q:'Как сказать «В центре фото находится дерево»?', a:'In the centre of the photo there is a tree.'},
+  {type:'grammar', emoji:'⚙️', q:'В чём разница: succeed in / fail?', a:'succeed in — добиться успеха; fail — потерпеть неудачу.'},
+  {type:'grammar', emoji:'🎟️', q:'Как попросить «Билет туда и обратно, пожалуйста»?', a:'A return ticket, please.'},
+];
+
+const motivations = [
+  {emoji:'🔥', text:'15 карточек позади! You are doing great — продолжай!'},
+  {emoji:'🚀', text:'30 карточек! Super job!'},
+  {emoji:'💪', text:'45 карточек! Уже больше половины — отличный темп!'},
+  {emoji:'🌟', text:'60 карточек! Финишная прямая, you can do it!'}
+];
+const motivAfter = [15,30,45,60];
+
+let deck = [];
+let idx = 0;
+let isFlipped = false;
+let hardCards = [];
+let reviewSets = [];
+let curReviewSet = 0;
+let viewTimerStart = 0;
+let insertedMotiv = [];
+
+const front = document.getElementById('front');
+const back  = document.getElementById('back');
+const cardEl= document.getElementById('card');
+const bar   = document.getElementById('bar');
+const counterEl = document.getElementById('counter');
+
+function buildDeck(){
+  return baseCards.map((c,i)=>({...c, _orig:i, longViewed:false}));
+}
+
+function init(){
+  deck = buildDeck();
+  idx = 0; hardCards=[]; isFlipped=false; insertedMotiv=[];
+  document.getElementById('study').style.display='block';
+  document.getElementById('review').style.display='none';
+  document.getElementById('final').style.display='none';
+  showCard();
+}
+
+function renderFace(c){
+  if(c.type==='motivation'){
+    front.className='face front motivation';
+    back.className='face back motivation';
+    front.innerHTML = `<div class="emoji">${c.emoji}</div><div class="translation">${c.text}</div><div class="tap-hint">нажми «Дальше»</div>`;
+    back.innerHTML = front.innerHTML;
+    return;
+  }
+  front.className='face front';
+  back.className='face back';
+  if(c.type==='word'){
+    const ex = c.ex.replace(/_____/g, '<span class="blank">_____</span>');
+    front.innerHTML = `
+      <div class="emoji">${c.emoji}</div>
+      <div class="translation">${c.tr}</div>
+      <div class="example">${ex}</div>
+      <div class="tap-hint">нажми, чтобы увидеть слово</div>`;
+    back.innerHTML = `
+      <div class="emoji">${c.emoji}</div>
+      <div class="word">${c.word}</div>`;
+  } else {
+    front.innerHTML = `
+      <div class="emoji">${c.emoji}</div>
+      <div class="qlabel">Grammar · Шаблон</div>
+      <div class="question">${c.q}</div>
+      <div class="tap-hint">нажми, чтобы увидеть ответ</div>`;
+    back.innerHTML = `
+      <div class="emoji">${c.emoji}</div>
+      <div class="answer">${c.a}</div>`;
+  }
+}
+
+function showCard(){
+  isFlipped=false;
+  cardEl.classList.remove('flipped');
+  const c = deck[idx];
+  renderFace(c);
+  updateProgress();
+  viewTimerStart = Date.now();
+}
+
+function updateProgress(){
+  const pct = Math.round(((idx+1)/deck.length)*100);
+  bar.style.width = pct + '%';
+  counterEl.textContent = (idx+1) + '/' + deck.length;
+}
+
+function flip(){
+  const c = deck[idx];
+  if(c.type==='motivation') return;
+  isFlipped = !isFlipped;
+  cardEl.classList.toggle('flipped', isFlipped);
+}
+
+function markLongView(){
+  const c = deck[idx];
+  if(c.type==='motivation') return;
+  const elapsed = Date.now() - viewTimerStart;
+  if(elapsed > 6000 && !c.longViewed){
+    c.longViewed = true;
+    if(!hardCards.find(h=>h._orig===c._orig && h.type===c.type)){
+      hardCards.push(c);
+    }
+  }
+}
+
+function nextCard(){
+  markLongView();
+  if(idx < deck.length-1){
+    idx++;
+    maybeInsertMotivation();
+    showCard();
+  } else {
+    startReview();
+  }
+}
+
+function prevCard(){
+  if(idx > 0){
+    idx--;
+    showCard();
+  }
+}
+
+function maybeInsertMotivation(){
+  const realIndex = deck.slice(0, idx+1).filter(x=>x.type!=='motivation').length;
+  const mi = motivAfter.indexOf(realIndex);
+  if(mi !== -1 && !insertedMotiv.includes(mi) && deck[idx].type!=='motivation'){
+    insertedMotiv.push(mi);
+    deck.splice(idx, 0, {type:'motivation', ...motivations[mi]});
+  }
+}
+
+function shuffleDeck(){
+  const cards = deck.filter(c=>c.type!=='motivation');
+  for(let i=cards.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [cards[i],cards[j]]=[cards[j],cards[i]];
+  }
+  deck = cards;
+  idx = 0;
+  insertedMotiv = [];
+  showCard();
+}
+
+/* ============ REVIEW MODE ============ */
+function startReview(){
+  markLongView();
+  // Если нет сложных карточек — сразу финал
+  if(hardCards.length === 0){
+    showFinal();
+    return;
+  }
+  // Разбиваем сложные карточки на сеты по 6 штук
+  reviewSets = [];
+  for(let i=0; i<hardCards.length; i+=6){
+    reviewSets.push(hardCards.slice(i, i+6));
+  }
+  curReviewSet = 0;
+  document.getElementById('study').style.display='none';
+  document.getElementById('final').style.display='none';
+  document.getElementById('review').style.display='flex';
+  renderReviewSet();
+}
+
+function renderReviewSet(){
+  const grid = document.getElementById('grid');
+  const set = reviewSets[curReviewSet];
+  document.getElementById('setNum').textContent =
+    (curReviewSet+1) + ' / ' + reviewSets.length;
+  grid.innerHTML = '';
+  set.forEach((c,i)=>{
+    const label = c.type==='word' ? c.word : c.q;
+    const sub   = c.type==='word' ? c.tr : 'grammar';
+    const div = document.createElement('div');
+    div.className = 'mini';
+    div.innerHTML = `
+      <div class="me">${c.emoji}</div>
+      <div class="mw">${label}</div>
+      <div class="mw" style="opacity:.55;font-weight:600;">${sub}</div>`;
+    div.onclick = ()=> div.classList.toggle('selected');
+    grid.appendChild(div);
+  });
+}
+
+function iKnowAll(){
+  // Снимаем выделение со всех — пользователь помнит все из текущего сета
+  document.querySelectorAll('#grid .mini').forEach(m=>m.classList.remove('selected'));
+  nextReviewSet();
+}
+
+function nextReviewSet(){
+  // Запоминаем отмеченные (сложные) карточки текущего сета
+  const minis = document.querySelectorAll('#grid .mini');
+  const set = reviewSets[curReviewSet];
+  const stillHard = [];
+  minis.forEach((m,i)=>{
+    if(m.classList.contains('selected')){
+      stillHard.push(set[i]);
+    }
+  });
+  // Сохраняем "всё ещё сложные" для повторного прохода
+  reviewSets[curReviewSet]._stillHard = stillHard;
+
+  if(curReviewSet < reviewSets.length-1){
+    curReviewSet++;
+    renderReviewSet();
+  } else {
+    finishReview();
+  }
+}
+
+function finishReview(){
+  // Собираем все карточки, которые остались сложными
+  let remaining = [];
+  reviewSets.forEach(s=>{
+    if(s._stillHard && s._stillHard.length){
+      remaining = remaining.concat(s._stillHard);
+    }
+  });
+
+  if(remaining.length > 0){
+    // Запускаем повторный круг только по сложным карточкам
+    deck = remaining.map((c,i)=>({...c, longViewed:false}));
+    hardCards = [];
+    idx = 0;
+    insertedMotiv = [];
+    document.getElementById('review').style.display='none';
+    document.getElementById('study').style.display='block';
+    showCard();
+  } else {
+    showFinal();
+  }
+}
+
+/* ============ FINAL ============ */
+function showFinal(){
+  document.getElementById('study').style.display='none';
+  document.getElementById('review').style.display='none';
+  const f = document.getElementById('final');
+  f.style.display='block';
+  const total = baseCards.length;
+  document.getElementById('finalMsg').textContent =
+    `Ты прошёл(ла) все ${total} карточек Unit 9: Success. ` +
+    `Все сложные слова повторены. Ты молодец — see you in class! 👍`;
+}
+
+function restart(){
+  init();
+}
+
+/* ============ KEYBOARD & SWIPE ============ */
+document.addEventListener('keydown', e=>{
+  if(document.getElementById('study').style.display==='none') return;
+  if(e.key==='ArrowRight') nextCard();
+  else if(e.key==='ArrowLeft') prevCard();
+  else if(e.key===' ' || e.key==='Enter'){ e.preventDefault(); flip(); }
+});
+
+let touchStartX = 0, touchStartY = 0;
+const scene = document.querySelector('.scene');
+scene.addEventListener('touchstart', e=>{
+  touchStartX = e.changedTouches[0].clientX;
+  touchStartY = e.changedTouches[0].clientY;
+}, {passive:true});
+scene.addEventListener('touchend', e=>{
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)){
+    if(dx < 0) nextCard();
+    else prevCard();
+  }
+}, {passive:true});
+
+/* ============ START ============ */
+init();
+</script>
+</body>
+</html>
